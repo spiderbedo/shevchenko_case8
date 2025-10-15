@@ -1,4 +1,5 @@
-# developers: Shevchenko Anna, Komissarov Platon, Loseva Ekaterina, Greshnova Sonya
+# Developers: Shevchenko Anna, Loseva Ekaterina, Greshnova Sonya, Komissarov Platon
+
 import re
 import base64
 import codecs
@@ -6,6 +7,7 @@ import ru_local as ru
 
 
 def find_and_validate_credit_cards(text) -> dict:
+
     """
     Find and validate credit card numbers in the text using the Luhn algorithm.
     Args:
@@ -21,7 +23,7 @@ def find_and_validate_credit_cards(text) -> dict:
     for candidate in candidates:
         clean_num = ''.join(c for c in candidate if c.isdigit())
         for i in range(len(clean_num) - 15):
-            num = clean_num[i:i + 16]
+            num = clean_num[i:i+16]
             if len(num) == 16:
                 numbers.append(num)
 
@@ -46,6 +48,7 @@ def find_and_validate_credit_cards(text) -> dict:
 
 
 def find_secrets(text) -> list:
+
     """
     Find potential secrets such as API keys, tokens, and passwords in the text.
     Args:
@@ -79,6 +82,7 @@ def find_secrets(text) -> list:
 
 
 def find_system_info(text) -> dict:
+
     """
     Find system information such as IP addresses, file names, and email addresses in the text.
     Args:
@@ -104,6 +108,7 @@ def find_system_info(text) -> dict:
 
 
 def decode_messages(text) -> dict:
+
     """
     Decode messages encoded in Base64, Hex, and ROT13 found in the text.
     Args:
@@ -156,6 +161,7 @@ def decode_messages(text) -> dict:
 
 
 def analyze_logs(text) -> dict:
+
     """
     Analyze log entries for potential security threats such as SQL injections, XSS attempts,
     suspicious user agents, and failed login attempts.
@@ -177,7 +183,7 @@ def analyze_logs(text) -> dict:
 
     for line in lines:
         sql_patterns = [
-            r"'.*?(OR|AND).*?=.*?",
+            r"'.*?(OR|AND).*?=.*?",  
             r"UNION.*?SELECT",
             r"SELECT.*?FROM",
             r"INSERT.*?INTO",
@@ -251,6 +257,7 @@ def analyze_logs(text) -> dict:
 
 
 def validate_phone(phone) -> tuple:
+
     """
     Validate and normalize Russian phone numbers to the format +7XXXXXXXXXX.
     Args:
@@ -264,11 +271,12 @@ def validate_phone(phone) -> tuple:
     if len(digits) == 11 and digits[0] in "78":
         normalized = "+7" + digits[1:]
         return True, normalized
-
-    return False, digits
-
+    
+    return False, digits 
+    
 
 def validate_date(date_str) -> tuple:
+
     """
     Validate and normalize dates in various formats to "DD.MM.YYYY".
     Args:
@@ -375,6 +383,7 @@ def validate_date(date_str) -> tuple:
 
 
 def validate_inn(inn) -> tuple:
+
     """
     Validate Russian INN (10 or 12 digits).
     Args:
@@ -391,7 +400,7 @@ def validate_inn(inn) -> tuple:
 
     if len(digits) not in (10, 12):
         return False, digits
-
+    
     if len(digits) == 10:
         s = sum(int(digits[i]) * n10[i] for i in range(9))
         check_digit = (s % 11) % 10
@@ -407,6 +416,7 @@ def validate_inn(inn) -> tuple:
 
 
 def normalize_and_validate(text) -> dict:
+
     """
     Extract and validate phone numbers, dates, and INNs from the text.
     Args:
@@ -460,27 +470,31 @@ def normalize_and_validate(text) -> dict:
     return result
 
 
-def generate_comprehensive_report(text) -> dict:
+def generate_comprehensive_report(main_text, log_text, messy_data) -> dict:
+
     """
     Run all analysis roles over the same input text and collect results in a single report dictionary.
     Args:
-        text (str): Input text to analyze.
+        main_text (str): The main text to analyze for financial data, secrets, system info, and encoded messages.
+        log_text (str): The log text to analyze for security threats.
+        messy_data (str): The messy data text to normalize and validate.
     Returns:
         dict: A comprehensive report with results from all analysis functions.
     """
 
     report = {
-        'financial_data': find_and_validate_credit_cards(text),
-        'secrets': find_secrets(text),
-        'system_info': find_system_info(text),
-        'encoded_messages': decode_messages(text),
-        'security_threats': analyze_logs(text),
-        'normalized_data': normalize_and_validate(text)
+        'financial_data': find_and_validate_credit_cards(main_text),
+        'secrets': find_secrets(main_text),
+        'system_info': find_system_info(main_text),
+        'encoded_messages': decode_messages(main_text),
+        'security_threats': analyze_logs(log_text),
+        'normalized_data': normalize_and_validate(messy_data)
     }
     return report
 
 
 def print_report(report) -> None:
+
     """
     Print the comprehensive report in a structured format.
     Args:
@@ -516,16 +530,23 @@ def print_report(report) -> None:
 
 
 def main() -> None:
+
     """
     Main function to read input text, generate report, and print it.
     Returns:
         None
     """
 
-    with open('файл плохой.txt', 'r', encoding='utf-8') as f:
-        text = f.read()
+    with open('data_leak_sample.txt', 'r', encoding='utf-8') as f:
+        main_text = f.read()
+    
+    with open('web_server_logs.txt', 'r', encoding='utf-8') as f:
+        log_text = f.read()
+        
+    with open('messy_data.txt', 'r', encoding='utf-8') as f:
+        messy_data = f.read()
 
-    report = generate_comprehensive_report(text)
+    report = generate_comprehensive_report(main_text, log_text, messy_data)
     print_report(report)
 
     with open("valid_artifacts.txt", "w", encoding="utf-8") as f:
@@ -580,7 +601,6 @@ def main() -> None:
             f.write("dates:\n")
             for date in report["normalized_data"].get("dates", {}).get("normalized", []):
                 f.write(str(date) + "\n")
-
 
 if __name__ == "__main__":
     main()
