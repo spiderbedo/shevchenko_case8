@@ -1,3 +1,4 @@
+# developers: Shevchenko Anna, Komissarov Platon, Loseva Ekaterina 
 import re
 import base64
 import codecs
